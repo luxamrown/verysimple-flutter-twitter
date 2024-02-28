@@ -5,6 +5,53 @@ void main() {
   runApp(const MyApp());
 }
 
+
+class Post extends ChangeNotifier {
+  int id;
+  String name;
+  String username;
+  String timestamp;
+  String content;
+  int likeCount;
+  bool isLiked;
+
+  Post({required this.id, required this.name, required this.username, required this.timestamp, required this.content, required this.likeCount, required this.isLiked});
+
+  int get getId {
+    return id;
+  }
+
+  String get getName {
+    return name;
+  }
+
+  String get getUsername {
+    return username;
+  }
+
+  String get getTimestamp {
+    return timestamp;
+  }
+
+  String get getContent {
+    return content;
+  }
+
+  int get getLikeCount {
+    return likeCount;
+  }
+  
+  bool get getLikeStatus{
+    return isLiked;
+  }
+
+  void setLike() {
+    isLiked = !isLiked;
+    likeCount =  isLiked ? likeCount + 1 : likeCount - 1;
+    notifyListeners();
+  }
+}
+
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
@@ -12,6 +59,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
+
 
     return MaterialApp(
       title: 'Flutter Demo',
@@ -43,6 +91,27 @@ class MyApp extends StatelessWidget {
   }
 }
 
+// class MyAppState extends ChangeNotifier {
+//   var current = WordPair.random();
+
+//   void getNext() {
+//     current = WordPair.random();
+//     notifyListeners();
+//   }
+
+//   var favourites = <WordPair>[];
+
+//   void toogleFavourite() {
+//     if(favourites.contains(current)){
+//       favourites.remove(current);
+//     } else {
+//       favourites.add(current);
+//     }
+
+//     notifyListeners();
+//   }
+// }
+
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key, required this.title});
 
@@ -70,6 +139,11 @@ class _MyHomePageState extends State<MyHomePage> {
     });
   }
 
+  var allPost = <Post>[];
+
+  var data = Post(id:1, name: "Luxam Rown", username: "@luxamrown", timestamp: "05-12-2003", content: "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.", likeCount: 5, isLiked: true);
+  var data2 = Post(id:2, name: "Ethan Hunt", username: "@ethanhunt", timestamp: "12-12-1991", content: "Lorem ipsum dolor sit amet", likeCount: 20, isLiked: false);
+
   @override
   Widget build(BuildContext context) {
     // This method is rerun every time setState is called, for instance as done
@@ -91,7 +165,7 @@ class _MyHomePageState extends State<MyHomePage> {
       body: Padding(
         padding: const EdgeInsets.only(left: 10, right: 10),
         child: ListView(
-          children: [BigCard(name: "keset",), BigCard(name: "keset",)],
+          children: [BigCard(post: data),BigCard(post: data2)],
         ),
       ),
       floatingActionButton: FloatingActionButton(
@@ -103,13 +177,14 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 }
 
+
 class BigCard extends StatelessWidget {
   const BigCard({
     super.key,
-    required this.name
+    required this.post
   });
 
-  final String name;
+  final Post post;
 
   @override
   Widget build(BuildContext context) {
@@ -118,26 +193,38 @@ class BigCard extends StatelessWidget {
     const styleUserName = TextStyle(fontWeight: FontWeight.w300, color: Colors.black45, fontSize: 12);
     const styleContent = TextStyle(fontWeight: FontWeight.w300, color: Colors.black87, fontSize: 12);
 
-    return const Card(
+
+    IconData likeIcon = post.getLikeStatus ? Icons.favorite : Icons.favorite_border;
+
+    // if(post.getLikeStatus){
+    //   likeIcon = Icons.favorite;
+    // } else {
+    //   likeIcon = Icons.favorite_border;
+    // }
+
+    // print("GOBLO ${}", );
+
+
+    return Card(
       color: Colors.white,
       child: Padding(
-        padding: EdgeInsets.all(2),
+        padding: const EdgeInsets.all(2),
         child: Column(
           children: [
           ListTile(
-            leading: Icon(
+            leading: const Icon(
               Icons.person,
               color: Colors.black87,
             ),
             title: Row(
               children: [
                 Text(
-                  "Luxam Rown",
+                  post.getName,
                   style: styleName,
                 ),
                 Spacer(),
                 Text(
-                  '@luxamrown',
+                  post.getUsername,
                   style: styleUserName,
                 ),
               ],
@@ -145,12 +232,19 @@ class BigCard extends StatelessWidget {
             subtitle: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                SizedBox(height: 10),
-                Text('25-12-2003', style: styleUserName, textAlign: TextAlign.start, textWidthBasis: TextWidthBasis.longestLine),
-                SizedBox(height: 10),
-                Text('Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.', style: styleContent),
-                SizedBox(height: 10),
-                Text('25 people liked this post', style: styleUserName, textAlign: TextAlign.start, textWidthBasis: TextWidthBasis.longestLine),
+                const SizedBox(height: 10),
+                Text(post.getTimestamp, style: styleUserName, textAlign: TextAlign.start, textWidthBasis: TextWidthBasis.longestLine),
+                const SizedBox(height: 10),
+                Text(post.getContent, style: styleContent),
+                const SizedBox(height: 10),
+                Text('${post.getLikeCount} people liked this post', style: styleUserName, textAlign: TextAlign.start, textWidthBasis: TextWidthBasis.longestLine),
+                const SizedBox(height: 10),
+                IconButton(
+                  icon: Icon(likeIcon, color: Colors.red),
+                  onPressed: () {
+                    post.setLike();
+                  },
+                ),
               ],
             ),
           ),
