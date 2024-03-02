@@ -1,57 +1,13 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
+import 'package:simple_twt/model/post.dart';
 
 void main() {
   runApp(const MyApp());
 }
-
-
-class Post extends ChangeNotifier {
-  int id;
-  String name;
-  String username;
-  String timestamp;
-  String content;
-  int likeCount;
-  bool isLiked;
-
-  Post({required this.id, required this.name, required this.username, required this.timestamp, required this.content, required this.likeCount, required this.isLiked});
-
-  int get getId {
-    return id;
-  }
-
-  String get getName {
-    return name;
-  }
-
-  String get getUsername {
-    return username;
-  }
-
-  String get getTimestamp {
-    return timestamp;
-  }
-
-  String get getContent {
-    return content;
-  }
-
-  int get getLikeCount {
-    return likeCount;
-  }
-  
-  bool get getLikeStatus{
-    return isLiked;
-  }
-
-  void setLike() {
-    isLiked = !isLiked;
-    likeCount =  isLiked ? likeCount + 1 : likeCount - 1;
-    notifyListeners();
-  }
-}
-
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
@@ -60,149 +16,199 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
 
-
-    return MaterialApp(
+    return ChangeNotifierProvider(create: (context) => MyAppState(), child: MaterialApp(
       title: 'Flutter Demo',
       theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // TRY THIS: Try running your application with "flutter run". You'll see
-        // the application has a purple toolbar. Then, without quitting the app,
-        // try changing the seedColor in the colorScheme below to Colors.green
-        // and then invoke "hot reload" (save your changes or press the "hot
-        // reload" button in a Flutter-supported IDE, or press "r" if you used
-        // the command line to start the app).
-        //
-        // Notice that the counter didn't reset back to zero; the application
-        // state is not lost during the reload. To reset the state, use hot
-        // restart instead.
-        //
-        // This works for code too, not just values: Most code changes can be
-        // tested with just a hot reload.
-        useMaterial3: true,
-        colorScheme: ColorScheme.fromSeed(
+          useMaterial3: true,
+          colorScheme: ColorScheme.fromSeed(
             seedColor: Colors.blue,
           ),
-        textTheme: GoogleFonts.montserratTextTheme(textTheme)
-      ),
-
-      home: const MyHomePage(title: 'Simple Twt Flutter'),
-    );
+          textTheme: GoogleFonts.montserratTextTheme(textTheme)),
+      home: MyHome(),
+    ));
   }
 }
 
-// class MyAppState extends ChangeNotifier {
-//   var current = WordPair.random();
-
-//   void getNext() {
-//     current = WordPair.random();
-//     notifyListeners();
-//   }
-
-//   var favourites = <WordPair>[];
-
-//   void toogleFavourite() {
-//     if(favourites.contains(current)){
-//       favourites.remove(current);
-//     } else {
-//       favourites.add(current);
-//     }
-
-//     notifyListeners();
-//   }
-// }
-
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
-
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
-
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
-
-  final String title;
-
+class MyHome extends StatefulWidget {
   @override
-  State<MyHomePage> createState() => _MyHomePageState();
+  State<MyHome> createState() => _MyHomeState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
-  bool popupIsOpen = false;
+class MyAppState extends ChangeNotifier {
+  bool adminMode = false;
 
-  void setPopupNewPost() {
+  void handleAdmin() {
+      adminMode = !adminMode;
+
+      notifyListeners();
+  }
+}
+
+class _MyHomeState extends State<MyHome> {
+  bool addPageIsOpen = false;
+
+  final allPosts = Post.initPost();
+
+  final formNameController = TextEditingController();
+  final formContentController = TextEditingController();
+
+  void handleLikePost(Post post) {
     setState(() {
-      popupIsOpen = !popupIsOpen;
+      post.setLike();
     });
   }
 
-  var allPost = <Post>[];
+  void handleAddPost() {
+    setState(() {
+      if(formNameController.text.isNotEmpty && formContentController.text.isNotEmpty){
+        allPosts.add(Post(id:allPosts.length + 1, name: formNameController.text, username: "@${formNameController.text.replaceAll(" ", "")}", timestamp: "${DateTime.timestamp().hour}:${DateTime.timestamp().minute}", content: formContentController.text, likeCount: Random().nextInt(500), isLiked: false));
+        
+        formNameController.clear();
+        
+        formContentController.clear();
+        
+        addPageIsOpen = !addPageIsOpen;
+      }
+    });
+  }
 
-  var data = Post(id:1, name: "Luxam Rown", username: "@luxamrown", timestamp: "05-12-2003", content: "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.", likeCount: 5, isLiked: true);
-  var data2 = Post(id:2, name: "Ethan Hunt", username: "@ethanhunt", timestamp: "12-12-1991", content: "Lorem ipsum dolor sit amet", likeCount: 20, isLiked: false);
+  void handleDeletePost(Post selectedPost) {
+    setState(() {
+      allPosts.removeWhere((post) => post.id == selectedPost.id);
+    });
+  }
 
+  void showAddContent() {
+    setState(() {
+      addPageIsOpen = !addPageIsOpen;
+    });
+  }
+
+  // var allPost = <Post>[];
   @override
   Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
+
+    var appState = context.watch<MyAppState>();
+
     return Scaffold(
       appBar: AppBar(
-        // TRY THIS: Try changing the color here to a specific color (to
-        // Colors.amber, perhaps?) and trigger a hot reload to see the AppBar
-        // change color while the other colors stay the same.
-        // backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title, style: const TextStyle(fontWeight: FontWeight.bold)),
+        title: const Text("Simple twt",
+            style: TextStyle(fontWeight: FontWeight.bold)),
       ),
+      
       body: Padding(
         padding: const EdgeInsets.only(left: 10, right: 10),
-        child: ListView(
-          children: [BigCard(post: data),BigCard(post: data2)],
-        ),
+        child: !addPageIsOpen ? PostListPage() : FormNewPost(),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: setPopupNewPost,
-        tooltip: 'Create',
-        child: const Icon(Icons.create),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Row(
+          children: [
+            Visibility(visible: !addPageIsOpen,child: FloatingActionButton.extended(
+                onPressed: appState.handleAdmin,
+                tooltip: 'Create',
+                label: const Text('Admin'),
+                icon: const Icon(Icons.person),
+              ),
+            ),
+
+            const Spacer(),
+
+            Visibility(visible: !addPageIsOpen,child: FloatingActionButton(
+                onPressed: showAddContent,
+                tooltip: 'Create',
+                child: const Icon(Icons.create),
+              ),
+            ),
+          ],
+        ),
+      ) 
     );
+  }
+
+  Padding FormNewPost() {
+    return Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text("Name", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20, color: Colors.black87)),
+
+            TextFormField(
+              controller: formNameController,
+              decoration: const InputDecoration(
+                border: UnderlineInputBorder(),
+                hintText: "Enter your name", 
+                hintStyle: TextStyle(color: Colors.black26)
+              ),
+            ),
+            const SizedBox(height: 20),
+
+            const Text("Content", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20, color: Colors.black87)),
+
+            TextFormField(
+              controller: formContentController,
+              maxLines: 8, //or null 
+              decoration: const InputDecoration(
+                border: UnderlineInputBorder(),
+                hintText: "Write content", 
+                hintStyle: TextStyle(color: Colors.black26)
+              ),
+            ),
+
+            const SizedBox(height: 20),
+
+            Row(
+              children: [
+                TextButton(
+                  style: TextButton.styleFrom(backgroundColor: Colors.red),
+                  onPressed: showAddContent,
+                  child: const Text('Cancel', style: TextStyle(color: Colors.white)),
+                ),
+                const Spacer(),
+                TextButton(
+                  style: TextButton.styleFrom(backgroundColor: Colors.blue),
+                  onPressed: handleAddPost,
+                  child: const Text('Post now', style: TextStyle(color: Colors.white)),
+                ),
+
+              ],
+            )
+          ],
+        ),
+      );
+  }
+
+  ListView PostListPage() {
+    return ListView(
+        children: [
+          for (var selectedPost in allPosts)
+            BigCard(post: selectedPost, handleLike: handleLikePost, handleDelete: handleDeletePost)
+        ],
+      );
   }
 }
 
-
 class BigCard extends StatelessWidget {
-  const BigCard({
-    super.key,
-    required this.post
-  });
+  const BigCard({super.key, required this.post, required this.handleLike, required this.handleDelete});
 
   final Post post;
+  final handleLike;
+  final handleDelete;
 
   @override
   Widget build(BuildContext context) {
-
-    const styleName = TextStyle(fontWeight: FontWeight.bold, color: Colors.black87, fontSize: 16);
-    const styleUserName = TextStyle(fontWeight: FontWeight.w300, color: Colors.black45, fontSize: 12);
-    const styleContent = TextStyle(fontWeight: FontWeight.w300, color: Colors.black87, fontSize: 12);
-
+  var appState = context.watch<MyAppState>();
+    const styleName = TextStyle(
+        fontWeight: FontWeight.bold, color: Colors.black87, fontSize: 16);
+    const styleUserName = TextStyle(
+        fontWeight: FontWeight.w300, color: Colors.black45, fontSize: 12);
+    const styleContent = TextStyle(
+        fontWeight: FontWeight.w300, color: Colors.black87, fontSize: 12);
 
     IconData likeIcon = post.getLikeStatus ? Icons.favorite : Icons.favorite_border;
-
-    // if(post.getLikeStatus){
-    //   likeIcon = Icons.favorite;
-    // } else {
-    //   likeIcon = Icons.favorite_border;
-    // }
-
-    // print("GOBLO ${}", );
 
 
     return Card(
@@ -211,43 +217,72 @@ class BigCard extends StatelessWidget {
         padding: const EdgeInsets.all(2),
         child: Column(
           children: [
-          ListTile(
-            leading: const Icon(
-              Icons.person,
-              color: Colors.black87,
+            ListTile(
+              leading: const Icon(
+                Icons.person,
+                color: Colors.black87,
+              ),
+              title: Row(
+                children: [
+                  Text(
+                    post.getName,
+                    style: styleName,
+                  ),
+                  Spacer(),
+                  Text(
+                    post.getUsername,
+                    style: styleUserName,
+                  ),
+                ],
+              ),
+              subtitle: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 10),
+                  
+                  Text(post.getTimestamp,
+                      style: styleUserName,
+                      textAlign: TextAlign.start,
+                      textWidthBasis: TextWidthBasis.longestLine),
+                  const SizedBox(height: 10),
+
+                  Text(post.getContent, style: styleContent),
+
+                  const SizedBox(height: 10),
+
+                  Text('${post.getLikeCount} people liked this post',
+                      style: styleUserName,
+                      textAlign: TextAlign.start,
+                      textWidthBasis: TextWidthBasis.longestLine),
+
+                  const SizedBox(height: 10),
+
+                  Row(
+                    children: [
+                      IconButton(
+                        icon: Icon(likeIcon, color: Colors.red),
+                        onPressed: () {
+                          handleLike(post);
+                        },
+                      ),
+
+                      const Spacer(),
+
+                      Visibility(visible: appState.adminMode ,child: TextButton.icon(
+                        icon: const Icon(Icons.delete, color: Colors.white),
+                        label: Text("Delete", style: TextStyle(color: Colors.white)),
+                        onPressed: () {
+                          handleDelete(post);
+                        },
+                        style: ButtonStyle(backgroundColor: MaterialStateProperty.all(Colors.red)),
+                      ),)
+
+
+                    ],
+                  ),
+                ],
+              ),
             ),
-            title: Row(
-              children: [
-                Text(
-                  post.getName,
-                  style: styleName,
-                ),
-                Spacer(),
-                Text(
-                  post.getUsername,
-                  style: styleUserName,
-                ),
-              ],
-            ),
-            subtitle: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const SizedBox(height: 10),
-                Text(post.getTimestamp, style: styleUserName, textAlign: TextAlign.start, textWidthBasis: TextWidthBasis.longestLine),
-                const SizedBox(height: 10),
-                Text(post.getContent, style: styleContent),
-                const SizedBox(height: 10),
-                Text('${post.getLikeCount} people liked this post', style: styleUserName, textAlign: TextAlign.start, textWidthBasis: TextWidthBasis.longestLine),
-                const SizedBox(height: 10),
-                IconButton(
-                  icon: Icon(likeIcon, color: Colors.red),
-                  onPressed: () {
-                    post.setLike();
-                  },
-                ),
-              ],
-            ),
-          ),
           ],
         ),
       ),
