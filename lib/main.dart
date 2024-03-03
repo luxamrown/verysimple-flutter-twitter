@@ -61,7 +61,7 @@ class _MyHomeState extends State<MyHome> {
   void handleAddPost() {
     setState(() {
       if(formNameController.text.isNotEmpty && formContentController.text.isNotEmpty){
-        allPosts.add(Post(id:allPosts.length + 1, name: formNameController.text, username: "@${formNameController.text.replaceAll(" ", "")}", timestamp: "${DateTime.timestamp().hour}:${DateTime.timestamp().minute}", content: formContentController.text, likeCount: Random().nextInt(500), isLiked: false));
+        allPosts.insert(0, Post(id:allPosts.length + 1, name: formNameController.text, username: "@${formNameController.text.replaceAll(" ", "")}", timestamp: "${DateTime.timestamp().hour}:${DateTime.timestamp().minute}", content: formContentController.text, likeCount: Random().nextInt(500), isLiked: false));
         
         formNameController.clear();
         
